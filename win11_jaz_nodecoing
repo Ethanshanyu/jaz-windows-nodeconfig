@@ -1,0 +1,39 @@
+WIN11+Docker配置JAZ节点
+
+
+第一步：安装Docker desktop
+  1)：下载：打开Docker官网-->Products-->Docker Desktop，安装：下一步直到完成
+  2)：配置：
+        1：首次打开Docker会反复停止、启动，提示更新WSL2 Linux内核更新包，弹出提示框里网址点进去；
+        点击”适用于 x64 计算机的 WSL2 Linux 内核更新包“，下载”wsl_update_x64 .msi“安装；
+        2：打开PowerShell，执行"wsl --set-default-version 2"，回显”有关与 WSL 2 的主要区别的信息.....操作成功完成。“
+        3：重新启动Docker
+
+第二步：
+  1）：打开PowerShell，执行命令（星号里内容直接复制到PowerShell执行）：
+*********************************
+docker run -p 30333:30333 -p 9933:9933 -p 9944:9944 -v jaz-data:/data `
+jaznetwork/jaz-node:artio `
+--base-path=/data `
+--pruning=archive `
+--rpc-methods=unsafe `
+--unsafe-ws-external `
+--unsafe-rpc-external
+*********************************
+
+ 2）：再打开一个PowerShell，执行命令：
+*********************************
+Invoke-WebRequest `
+    -Uri "http://127.0.0.1:9933" `
+    -Headers @{"Content-Type"= "application/json"} `
+    -Body '{"method": "author_rotateKeys","jsonrpc": "2.0","id":1 ,"params": [] }' `
+    -OutFile "c:\file.json" `
+    -Method Post
+*********************************
+这里获得Session Key，结果输出为文件，保存在”C:\file.json“，打开就可以看到Session Key，然后复制绑定）。
+
+上面步骤完成后，第二个PowerShell窗口可以关闭，第一个窗口将回显节点正在处理的数据；
+
+备注：
+打开Docker-->Containers，可以看到节点运行的状态，点Name进去可以看到滚动的回显日志；
+                      -->Volumes，可以看到数据大小；
