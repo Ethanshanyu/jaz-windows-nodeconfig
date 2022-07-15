@@ -1,41 +1,33 @@
 WINDOWS 11 + Docker 配置JAZ测试网节点
 
-
 第一步：安装Docker Desktop
-1)：下载：打开Docker官网-->Products-->Docker Desktop，安装：下一步直到完成；
-2)：配置：
-    1：首次打开Docker会反复停止、启动，提示更新WSL2 Linux内核更新包：
-       弹出提示框里网址点进去，点”适用于 x64 计算机的 WSL2 Linux 内核更新包“，下载”wsl_update_x64.msi“安装；
-    2：打开PowerShell，执行"wsl --set-default-version 2"，回显”有关与 WSL 2 的主要区别的信息.....操作成功完成。“；
-    3：重启Docker。
+1): 准备
+    1: WIN10及以下系统需安装Hyper-V(开始->设置->应用->可选功能->更多Windows功能)
+    2: CPU在BIOS中启用虚拟化;
+2): 安装: Docker官网:https://www.docker.com/products/docker-desktop/，下载Windows版Docker，下一步直到完成
+3): 配置:
+    1: 首次打开Docker反复停止/启动，提示更新WSL2 Linux内核更新包：
+       弹出提示框里网址点进去，点"适用于 x64 计算机的 WSL2 Linux 内核更新包"，下载"wsl_update_x64.msi"安装；
+       下载链接：https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi
+    2: 打开PowerShell，执行"wsl --set-default-version 2"
+    3: 重启
+    备注: 如Docker依旧无法运行，打开PowerShell，输入"netsh winsock reset"，重启即可
 
 第二步：
-1）：打开PowerShell，执行命令（星号里内容复制到PowerShell执行，不包括星号）：
+1）: 打开PowerShell，执行（不包括"星号"）：
 *********************************
-docker run -p 30333:30333 -p 9933:9933 -p 9944:9944 -v jaz-data:/data `
-jaznetwork/jaz-node:artio `
---base-path=/data `
---pruning=archive `
---rpc-methods=unsafe `
---unsafe-ws-external `
---unsafe-rpc-external
+docker run -p 30333:30333 -p 9933:9933 -p 9944:9944 -v jaz-data:/data jaznetwork/jaz-node:artio --base-path=/data --pruning=archive --rpc-methods=unsafe --unsafe-ws-external --unsafe-rpc-external
 *********************************
 
-2）：再打开一个PowerShell，执行命令：
+2）: 新开PowerShell，执行：
 *********************************
-Invoke-WebRequest `
-    -Uri "http://127.0.0.1:9933" `
-    -Headers @{"Content-Type"= "application/json"} `
-    -Body '{"method": "author_rotateKeys","jsonrpc": "2.0","id":1 ,"params": [] }' `
-    -OutFile "c:\session_key.txt" `
-    -Method Post
+Invoke-WebRequest -Uri "http://127.0.0.1:9933" -Headers @{"Content-Type"= "application/json"} -Body '{"method": "author_rotateKeys","jsonrpc": "2.0","id":1 ,"params": [] }' -OutFile "c:\session_key.txt" -Method Post
 *********************************
-说明：本命令用于获得Session Key，运行结果输出为文件保存在”c:\session_key.txt“（可自行修改保存位置，如提示无权限，使用管理员权限打开PowerShell）。
+说明：本命令用于获得Session Key，运行结果输出为文件保存在"c:\session_key.txt"（可自行修改保存位置）
 Session_key.txt文件内容：
 {"jsonrpc":"2.0","result":"0x7ee5df3707a82c0546e8785aa3be9af9777ee6851824a............6fb0b4a6aa4fd3b7e52f8753d2b29e4776de519cbd96debc55","id":1}
-result的值就是你的session key
+result对应的值就是你的session key
 
-备注：
-上面步骤完成后，第二个PowerShell窗口可以关闭，第一个窗口将回显节点正在处理的数据；
-打开Docker-->Containers，可以看到节点运行的状态，点Name进去可以看到滚动的回显日志；
-         -->Volumes，可以看到数据大小；
+备注:
+均需要使用管理员权限打开PowerShell
+第二个PowerShell可关闭，第一个Powershell关闭后节点服务会停止，可以在Docker-->Containers中重新运行，不需要再重复以上操作步骤。
